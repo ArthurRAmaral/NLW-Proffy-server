@@ -1,3 +1,4 @@
 import Knex from "knex";
 import database from "../../knexfile";
-export const knex = Knex(database);
+const db = Knex(database);
+export default db;
