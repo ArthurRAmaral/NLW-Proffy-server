@@ -19,7 +19,7 @@ export default class ClassesController {
     if (!week_day || !subject || !time)
       return res.status(400).json({
         status: 400,
-        error: "Missing fliters to search classes",
+        error: "Missing filters to search classes",
       });
     try {
       const timeInMinutes = convertHoursToMinutes(time);
