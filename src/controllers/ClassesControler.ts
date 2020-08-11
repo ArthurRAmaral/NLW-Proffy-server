@@ -16,31 +16,37 @@ export default class ClassesController {
     const subject = filters.subject as string;
     const time = filters.time as string;
 
-    if (!week_day || !subject || !time)
-      return res.status(400).json({
-        status: 400,
-        error: "Missing filters to search classes",
-      });
+    // if (!week_day || !subject || !time)
+    //   return res.status(400).json({
+    //     status: 400,
+    //     error: "Missing filters to search classes",
+    //   });
     try {
       const timeInMinutes = convertHoursToMinutes(time);
 
-      const classes = await db("classes")
-        .whereExists(function () {
-          this.select("classes_schedules.*")
-            .from("classes_schedules")
-            .whereRaw("`classes_schedules`.`class_id` = `classes`.`id`")
-            .whereRaw("`classes_schedules`.`week_day` = ??", [week_day])
-            .whereRaw("`classes_schedules`.`from` <= ??", [timeInMinutes])
-            .whereRaw("`classes_schedules`.`to` > ??", [timeInMinutes]);
-        })
-        .where("classes.subject", "=", subject)
+      let holder = db("classes").whereExists(function () {
+        let holder = this.select("classes_schedules.*")
+          .from("classes_schedules")
+          .whereRaw("`classes_schedules`.`class_id` = `classes`.`id`");
+
+        holder = week_day
+          ? holder.whereRaw("`classes_schedules`.`week_day` = ??", [week_day])
+          : holder;
+
+        holder = timeInMinutes
+          ? holder
+              .whereRaw("`classes_schedules`.`from` <= ??", [timeInMinutes])
+              .whereRaw("`classes_schedules`.`to` > ??", [timeInMinutes])
+          : holder;
+      });
+      // ;
+      // subject && (holder = holder
+      holder = subject ? holder.where("classes.subject", "=", subject) : holder;
+      // )
+      // const classes = await holder
+      const classes = await holder
         .join("users", "classes.user_id", "=", "users.id")
         .select(["classes.*", "users.*"]);
-
-      // const classeSchedules = db("classes_schedule")
-      //   .where("classes.week_day", "=", week_day)
-      //   .where("classes.from", "<=", timeInMinutes)
-      //   .where("classes.to", ">=", timeInMinutes);
 
       return res.json(classes);
     } catch (err) {
